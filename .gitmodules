@@ -1,0 +1,3 @@
+[submodule "/Users/johndaniel/Developer/blog/src/content"]
+	path = /Users/johndaniel/Developer/blog/src/content
+	url = git@github.com:norombabajd/content.git
