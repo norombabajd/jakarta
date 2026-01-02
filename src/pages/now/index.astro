@@ -1,0 +1,104 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE, DEFAULT_OG_IMAGE, NOW_DESCRIPTION } from '../../consts';
+
+const posts = (await getCollection('now')).sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const latestPost = posts[0];
+const { Content: NowContent } = latestPost ? await render(latestPost) : { Content: null };
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${SITE_TITLE} - Now`} description={NOW_DESCRIPTION} image={DEFAULT_OG_IMAGE} />
+	</head>
+	<body>
+		<Header />
+		<main class="w-full max-w-3xl mx-auto px-4 py-8">
+
+			<!-- Header Section -->
+			<section>
+				<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+					<h3 class="text-xl tracking-tight mb-3 text-black">Now</h3>
+					<p class="text-gray-700">
+						The place to know what I'm up to. Great place to start if we haven't caught up in awhile. 
+					</p>
+					<p class="text-sm pt-4">This is a <a href="https://nownownow.com/about" class="text-blue-600 hover:underline font-bold" target="_blank" rel="noopener noreferrer">now page</a>, inspired by Derek Sivers.</p>
+				</div>
+			</section>
+
+			<!-- Latest Update Section -->
+			{latestPost && (
+				<section class="mb-6">
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+						<div class="flex flex-col">
+							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Latest Update</p>
+							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
+								Last updated: {new Date(latestPost.data.date.getTime() + latestPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									timeZone: 'PST'
+								})}
+							</time>
+							<h3 class="text-2xl md:text-3xl font-black text-black mb-6">
+								<a href={`/now/${latestPost.id}/`} class="no-underline hover:underline">
+									{latestPost.data.title}
+								</a>
+							</h3>
+
+							{NowContent && (
+								<div class="prose prose-lg max-w-none text-gray-700">
+									<NowContent />
+								</div>
+							)}
+						</div>
+					</div>
+				</section>
+			)}
+
+			<!-- Previous Updates Section -->
+			{posts.length > 1 && (
+				<section class="mb-6">
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+						<h3 class="text-lg font-black text-black mb-4 pb-4">Previous Updates</h3>
+						<div class="space-y-4">
+							{posts.slice(1).map((post) => (
+								<article class="flex items-start gap-4">
+									<time class="text-gray-600 whitespace-nowrap uppercase text-sm md:text-base flex-shrink-0 w-24 md:w-32">
+										{new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+											day: '2-digit',
+											month: 'short',
+											year: 'numeric',
+											timeZone: 'PST'
+										}).replace(',', ',')}
+									</time>
+									<div class="flex-1 min-w-0">
+										<p class="text-gray-900 leading-tight text-sm md:text-base font-semibold mb-2">
+											<a href={`/now/${post.id}/`} class="no-underline hover:underline text-blue-600">
+												{post.data.title}
+											</a>
+										</p>
+										{post.data.description && (
+											<p class="text-gray-700 text-sm leading-relaxed">
+												{post.data.description}
+											</p>
+										)}
+									</div>
+								</article>
+							))}
+						</div>
+					</div>
+				</section>
+			)}
+
+		</main>
+		<Footer />
+	</body>
+</html>

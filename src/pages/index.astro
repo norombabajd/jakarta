@@ -1,0 +1,273 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE, SITE_DESCRIPTION, APPLE_MUSIC_PLAYLIST, ENABLE_PLAYLIST_FEATURE, PROFILE_NAME, PROFILE_BIO, PROFILE_PHOTO, DEFAULT_OG_IMAGE, PERSONAL_DESCRIPTION, ACADEMICS_DESCRIPTION, TECHNOLOGY_DESCRIPTION, NOW_DESCRIPTION } from '../consts';
+import Footer from '../components/Footer.astro';
+
+// Fetch posts from all collections
+const personalPosts = await getCollection('personal');
+const technologyPosts = await getCollection('technology');
+const academicsPosts = await getCollection('academics');
+const nowPosts = await getCollection('now');
+
+// Combine all posts and sort by date
+const posts = [...personalPosts, ...technologyPosts, ...academicsPosts].sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const [featuredPost, ...otherPosts] = posts;
+const recentPosts = otherPosts.slice(0, 3);
+
+// Get latest now post
+const sortedNowPosts = nowPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latestNowPost = sortedNowPosts[0];
+const { Content: NowContent } = latestNowPost ? await render(latestNowPost) : { Content: null };
+
+// Collect all unique tags and count posts per tag
+const tagStats = posts.reduce((acc, post) => {
+	if (post.data.tags) {
+		post.data.tags.forEach(tag => {
+			if (!acc[tag]) {
+				acc[tag] = { count: 0, posts: [] };
+			}
+			acc[tag].count++;
+			acc[tag].posts.push(post);
+		});
+	}
+	return acc;
+}, {} as Record<string, { count: number; posts: typeof posts }>);
+
+// Sort tags alphabetically
+const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} image={DEFAULT_OG_IMAGE} />
+	</head>
+	<body>
+		<Header />
+		<main class="w-full max-w-3xl mx-auto px-4 py-8">
+
+			<!-- Profile Section -->
+			<section>
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+						<h3 class="text-lg font-black text-black tracking-tight">{PROFILE_NAME}</h3>
+						<p class="font-semibold tracking-tight">Researcher, designer, and builder.</p>
+						<p class="mt-2">Currently pursuing a master's degree in Informatics at the University of California, Irvine.</p>
+					</div>
+			</section>
+
+			<!-- Now Section -->
+			{latestNowPost && (
+				<section class="mb-6">
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+						<div class="flex flex-col">
+							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Now</p>
+							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
+								Last updated: {new Date(latestNowPost.data.date.getTime() + latestNowPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									timeZone: 'PST'
+								})}
+							</time>
+							<h3 class="text-2xl md:text-3xl font-black text-black mb-6">
+								<a href={`/now/`} class="no-underline hover:underline">
+									{latestNowPost.data.title}
+								</a>
+							</h3>
+
+							{NowContent && (
+								<div class="prose prose-lg max-w-none text-gray-700">
+									{latestNowPost.data.description}
+								</div>
+							)}
+
+							<div class="mt-6 pt-4 border-t-2 border-black">
+								<a href={`/now`} class="inline-block text-blue-600 hover:underline font-bold">
+									Read here...
+								</a>
+							</div>
+						</div>
+					</div>
+				</section>
+			)}
+
+			<!-- Featured Post Section -->
+			{featuredPost && (
+				<section class="mb-6">
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+						<div class="flex flex-col">
+							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Latest post</p>
+							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
+								{new Date(featuredPost.data.date.getTime() + featuredPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									timeZone: 'PST'
+								})}
+							</time>
+							<h3 class="text-2xl md:text-3xl font-black text-black mb-6">
+								<a href={`/${featuredPost.collection}/${featuredPost.id}/`} class="no-underline hover:underline">
+									{featuredPost.data.title}
+								</a>
+							</h3>
+
+							{featuredPost.data.cover && (
+								<div class="border-2 border-black mt-6 mb-6">
+									<Image
+										width={720}
+										height={360}
+										src={featuredPost.data.cover}
+										alt={featuredPost.data.title}
+										class="w-full object-cover block"
+									/>
+								</div>
+							)}
+
+							{featuredPost.data.description && (
+								<p class="leading-relaxed mb-4 text-gray-700">
+									{featuredPost.data.description}
+								</p>
+							)}
+
+							{featuredPost.data.tags && featuredPost.data.tags.length > 0 && (
+								<div class="flex flex-wrap gap-1 mt-2">
+									<span class="inline-block bg-gray-200 text-gray-700 px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
+										{featuredPost.collection}
+									</span>
+									{featuredPost.data.tags && featuredPost.data.tags.length > 0 && (
+										featuredPost.data.tags.map((tag) => (
+											<span class="inline-block bg-black text-white px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
+												{tag}
+											</span>
+										))
+									)}
+								</div>
+							)}
+
+							<div class="mt-6 pt-4 border-t-2 border-black">
+								<a href={`/${featuredPost.collection}/${featuredPost.id}/`} class="inline-block text-blue-600 hover:underline font-bold">
+									Read here...
+								</a>
+							</div>
+						</div>
+					</div>
+				</section>
+			)}
+
+			<!-- Recent Posts List -->
+			{recentPosts.length > 0 && (
+				<section>
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+						<h3 class="text-lg font-black text-black mb-4 pb-4">More Posts</h3>
+						<div class="space-y-4">
+							{recentPosts.map((post) => (
+								<article class="flex items-start gap-4">
+									<time class="text-gray-600 whitespace-nowrap uppercase text-sm md:text-base flex-shrink-0 w-24 md:w-32">
+										{new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+											day: '2-digit',
+											month: 'short',
+											year: 'numeric',
+											timeZone: 'PST'
+										}).replace(',', ',')}
+									</time>
+									<div class="flex-1 min-w-0">
+										<p class="text-gray-900 leading-tight text-sm md:text-base font-semibold mb-2">
+											<a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+												{post.data.title}
+											</a>
+										</p>
+										{post.data.description && (
+											<p class="text-gray-700 text-sm leading-relaxed mb-2">
+												{post.data.description}
+											</p>
+										)}
+										<div class="flex flex-wrap gap-1 mt-2">
+											<span class="inline-block bg-gray-200 text-gray-700 px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
+												{post.collection}
+											</span>
+											{post.data.tags && post.data.tags.length > 0 && (
+												post.data.tags.map((tag) => (
+													<span class="inline-block bg-black text-white px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
+														{tag}
+													</span>
+												))
+											)}
+										</div>
+									</div>
+								</article>
+							))}
+						</div>
+
+						{/* All Posts Link */}
+						{otherPosts.length > 3 && (
+							<div class="mt-6 pt-4 border-t-2 border-black">
+								<a href="/posts" class="inline-block text-blue-600 hover:underline font-bold">
+									All Posts...
+								</a>
+							</div>
+						)}
+					</div>
+				</section>
+			)}
+
+			<section>
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+						<h3 class="text-lg font-black text-black mb-4">Collections</h3>
+						<p class="pb-4"></p>
+						<div>
+							<a href="/academics" class="inline-block text-blue-600 hover:underline font-bold">
+								/academics
+							</a>
+							<p>{ACADEMICS_DESCRIPTION}</p>
+						</div>
+						<div>
+							<a href="/now" class="inline-block text-blue-600 hover:underline font-bold">
+								/now
+							</a>
+							<p>{NOW_DESCRIPTION}</p>
+						</div>
+						<div>
+							<a href="/personal" class="inline-block text-blue-600 hover:underline font-bold">
+								/personal
+							</a>
+							<p>{PERSONAL_DESCRIPTION}</p>
+						</div>
+						<div>
+							<a href="/technology" class="inline-block text-blue-600 hover:underline font-bold">
+								/technology
+							</a>
+							<p>{TECHNOLOGY_DESCRIPTION}</p>
+						</div>
+						<div class="mt-6 pt-4 border-t-2 border-black">
+							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide">Home [CV & Case Studies]</p>
+							<a href="https://norombabajd.com" class="inline-block text-blue-600 hover:underline font-bold">
+								norombabajd.com
+							</a>
+						</div>
+						<div class="mt-4">
+							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide">Blog [you are here]</p>
+							<a href="https://blog.norombabajd.com" class="inline-block text-blue-600 hover:underline font-bold">
+								blog.norombabajd.com
+							</a>
+						</div>
+			</section>
+
+
+			<!-- Songs in Rotation -->
+			{ENABLE_PLAYLIST_FEATURE && APPLE_MUSIC_PLAYLIST && (<section class="mb-6">
+				<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+					<h3 class="text-lg font-black text-black mb-4 pb-4">Songs in Rotation</h3>
+					<iframe height="450" width="100%" title="Media player" src={APPLE_MUSIC_PLAYLIST} id="embedPlayer" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation" allow="autoplay *; encrypted-media *; clipboard-write" style="border: 0px; border-radius: 12px; width: 100%; height: 450px; max-width: 660px;"></iframe>
+				</div>
+			</section>)}
+
+		</main>
+		<Footer />
+	</body>
+</html>

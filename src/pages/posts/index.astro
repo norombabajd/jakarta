@@ -1,0 +1,576 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from '../../consts';
+
+// Fetch posts from all three collections
+const personalPosts = await getCollection('personal');
+const technologyPosts = await getCollection('technology');
+const academicsPosts = await getCollection('academics');
+
+// Combine all posts and sort by date
+const posts = [...personalPosts, ...technologyPosts, ...academicsPosts].sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+// Group posts by year with proper typing
+const postsByYear = posts.reduce((acc: Record<number, typeof posts>, post) => {
+    const year = post.data.date.getFullYear();
+    if (!acc[year]) {
+        acc[year] = [];
+    }
+    acc[year].push(post);
+    return acc;
+}, {} as Record<number, typeof posts>);
+
+// Get years in descending order with proper number conversion
+const years = Object.keys(postsByYear)
+    .map(year => Number(year))
+    .sort((a, b) => b - a);
+
+// Collect all unique tags and count posts per tag
+const tagStats = posts.reduce((acc, post) => {
+	if (post.data.tags) {
+		post.data.tags.forEach(tag => {
+			if (!acc[tag]) {
+				acc[tag] = { count: 0, posts: [] };
+			}
+			acc[tag].count++;
+			acc[tag].posts.push(post);
+		});
+	}
+	return acc;
+}, {} as Record<string, { count: number; posts: typeof posts }>);
+
+// Sort tags alphabetically
+const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
+
+// Group posts by collection/category
+const postsByCategory = {
+	all: posts,
+	personal: personalPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+	technology: technologyPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+	academics: academicsPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+};
+
+const categoryLabels = {
+	all: 'All',
+	personal: 'Personal',
+	technology: 'Technology',
+	academics: 'Academics',
+};
+
+// Group posts by category and year
+const postsByCategoryAndYear = {
+	all: posts.reduce((acc: Record<number, typeof posts>, post) => {
+		const year = post.data.date.getFullYear();
+		if (!acc[year]) acc[year] = [];
+		acc[year].push(post);
+		return acc;
+	}, {}),
+	personal: personalPosts.reduce((acc: Record<number, typeof personalPosts>, post) => {
+		const year = post.data.date.getFullYear();
+		if (!acc[year]) acc[year] = [];
+		acc[year].push(post);
+		return acc;
+	}, {}),
+	technology: technologyPosts.reduce((acc: Record<number, typeof technologyPosts>, post) => {
+		const year = post.data.date.getFullYear();
+		if (!acc[year]) acc[year] = [];
+		acc[year].push(post);
+		return acc;
+	}, {}),
+	academics: academicsPosts.reduce((acc: Record<number, typeof academicsPosts>, post) => {
+		const year = post.data.date.getFullYear();
+		if (!acc[year]) acc[year] = [];
+		acc[year].push(post);
+		return acc;
+	}, {}),
+};
+
+// Group posts by category and tag
+const postsByCategoryAndTag = {
+	all: posts.reduce((acc, post) => {
+		if (post.data.tags) {
+			post.data.tags.forEach(tag => {
+				if (!acc[tag]) acc[tag] = [];
+				acc[tag].push(post);
+			});
+		}
+		return acc;
+	}, {} as Record<string, typeof posts>),
+	personal: personalPosts.reduce((acc, post) => {
+		if (post.data.tags) {
+			post.data.tags.forEach(tag => {
+				if (!acc[tag]) acc[tag] = [];
+				acc[tag].push(post);
+			});
+		}
+		return acc;
+	}, {} as Record<string, typeof personalPosts>),
+	technology: technologyPosts.reduce((acc, post) => {
+		if (post.data.tags) {
+			post.data.tags.forEach(tag => {
+				if (!acc[tag]) acc[tag] = [];
+				acc[tag].push(post);
+			});
+		}
+		return acc;
+	}, {} as Record<string, typeof technologyPosts>),
+	academics: academicsPosts.reduce((acc, post) => {
+		if (post.data.tags) {
+			post.data.tags.forEach(tag => {
+				if (!acc[tag]) acc[tag] = [];
+				acc[tag].push(post);
+			});
+		}
+		return acc;
+	}, {} as Record<string, typeof academicsPosts>),
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${SITE_TITLE} - All Posts`} description={SITE_DESCRIPTION} image={DEFAULT_OG_IMAGE} />
+		<style>
+			html {
+				overflow-y: scroll;
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main class="w-full max-w-3xl mx-auto px-4 py-8">
+            <section>
+                <div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+                    <h2 class="text-xl font-bold mb-6 pb-3 text-black">Posts</h2>
+
+                    <!-- Category Navigation -->
+                    <div class="mb-4">
+                        <!-- <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Category</h3> -->
+                        <div class="flex gap-2 flex-wrap">
+                            <button
+                                class="category-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-black text-white transition-colors cursor-pointer hover:opacity-80"
+                                data-category="all"
+                            >
+                                All
+                            </button>
+                            <button
+                                class="category-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-white text-black transition-colors cursor-pointer hover:opacity-80"
+                                data-category="personal"
+                            >
+                                Personal
+                            </button>
+                            <button
+                                class="category-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-white text-black transition-colors cursor-pointer hover:opacity-80"
+                                data-category="technology"
+                            >
+                                Technology
+                            </button>
+                            <button
+                                class="category-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-white text-black transition-colors cursor-pointer hover:opacity-80"
+                                data-category="academics"
+                            >
+                                Academics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sort Navigation -->
+                    <div class="mb-6">
+                        <div class="flex gap-2 flex-wrap">
+                            <button
+                                class="sort-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-black text-white transition-colors cursor-pointer hover:opacity-80"
+                                data-sort="year"
+                            >
+                                Year
+                            </button>
+                            <button
+                                class="sort-button flex-1 px-4 py-2 font-bold uppercase text-sm tracking-wide border-2 border-black bg-white text-black transition-colors cursor-pointer hover:opacity-80"
+                                data-sort="tag"
+                            >
+                                Tag
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- All Category Content -->
+                    <div class="category-content" data-category="all">
+                        <!-- All by Year -->
+                        <div class="sort-content" data-sort="year">
+                            {Object.keys(postsByCategoryAndYear.all).sort((a, b) => Number(b) - Number(a)).map((year) => (
+                                <div class="mb-8 last:mb-0">
+                                    <h4 class="text-lg font-bold text-black mb-4 pb-2 border-b-2 border-gray-200">
+                                        {year}
+                                    </h4>
+                                    <div class="space-y-2">
+                                        {postsByCategoryAndYear.all[Number(year)]?.map((post) => (
+                                            <article class="flex items-stretch">
+                                                <time class="text-gray-600 uppercase text-sm md:text-base flex items-center min-w-[100px] md:min-w-[140px]">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 flex items-center">
+                                                    <p class="text-sm md:text-base text-gray-900">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <!-- All by Tag -->
+                        <div class="sort-content hidden" data-sort="tag">
+                            {Object.keys(postsByCategoryAndTag.all).sort().map((tag) => (
+                                <div class="mb-6 last:mb-0">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="inline-block bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 border-black">
+                                            {tag}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4 space-y-2 border-l-2 border-gray-300 pl-4">
+                                        {postsByCategoryAndTag.all[tag]?.map((post) => (
+                                            <article class="flex items-start gap-3">
+                                                <time class="text-gray-600 whitespace-nowrap text-xs flex-shrink-0">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: '2-digit',
+                                                        year: 'numeric',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-gray-900 leading-tight text-sm">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- Personal Category Content -->
+                    <div class="category-content hidden" data-category="personal">
+                        <!-- Personal by Year -->
+                        <div class="sort-content" data-sort="year">
+                            {Object.keys(postsByCategoryAndYear.personal).sort((a, b) => Number(b) - Number(a)).map((year) => (
+                                <div class="mb-8 last:mb-0">
+                                    <h4 class="text-lg font-bold text-black mb-4 pb-2 border-b-2 border-gray-200">
+                                        {year}
+                                    </h4>
+                                    <div class="space-y-2">
+                                        {postsByCategoryAndYear.personal[Number(year)]?.map((post) => (
+                                            <article class="flex items-stretch">
+                                                <time class="text-gray-600 uppercase text-sm md:text-base flex items-center min-w-[100px] md:min-w-[140px]">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 flex items-center">
+                                                    <p class="text-sm md:text-base text-gray-900">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <!-- Personal by Tag -->
+                        <div class="sort-content hidden" data-sort="tag">
+                            {Object.keys(postsByCategoryAndTag.personal).sort().map((tag) => (
+                                <div class="mb-6 last:mb-0">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="inline-block bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 border-black">
+                                            {tag}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4 space-y-2 border-l-2 border-gray-300 pl-4">
+                                        {postsByCategoryAndTag.personal[tag]?.map((post) => (
+                                            <article class="flex items-start gap-3">
+                                                <time class="text-gray-600 whitespace-nowrap text-xs flex-shrink-0">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: '2-digit',
+                                                        year: 'numeric',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-gray-900 leading-tight text-sm">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- Technology Category Content -->
+                    <div class="category-content hidden" data-category="technology">
+                        <!-- Technology by Year -->
+                        <div class="sort-content" data-sort="year">
+                            {Object.keys(postsByCategoryAndYear.technology).sort((a, b) => Number(b) - Number(a)).map((year) => (
+                                <div class="mb-8 last:mb-0">
+                                    <h4 class="text-lg font-bold text-black mb-4 pb-2 border-b-2 border-gray-200">
+                                        {year}
+                                    </h4>
+                                    <div class="space-y-2">
+                                        {postsByCategoryAndYear.technology[Number(year)]?.map((post) => (
+                                            <article class="flex items-stretch">
+                                                <time class="text-gray-600 uppercase text-sm md:text-base flex items-center min-w-[100px] md:min-w-[140px]">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 flex items-center">
+                                                    <p class="text-sm md:text-base text-gray-900">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <!-- Technology by Tag -->
+                        <div class="sort-content hidden" data-sort="tag">
+                            {Object.keys(postsByCategoryAndTag.technology).sort().map((tag) => (
+                                <div class="mb-6 last:mb-0">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="inline-block bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 border-black">
+                                            {tag}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4 space-y-2 border-l-2 border-gray-300 pl-4">
+                                        {postsByCategoryAndTag.technology[tag]?.map((post) => (
+                                            <article class="flex items-start gap-3">
+                                                <time class="text-gray-600 whitespace-nowrap text-xs flex-shrink-0">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: '2-digit',
+                                                        year: 'numeric',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-gray-900 leading-tight text-sm">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- Academics Category Content -->
+                    <div class="category-content hidden" data-category="academics">
+                        <!-- Academics by Year -->
+                        <div class="sort-content" data-sort="year">
+                            {Object.keys(postsByCategoryAndYear.academics).sort((a, b) => Number(b) - Number(a)).map((year) => (
+                                <div class="mb-8 last:mb-0">
+                                    <h4 class="text-lg font-bold text-black mb-4 pb-2 border-b-2 border-gray-200">
+                                        {year}
+                                    </h4>
+                                    <div class="space-y-2">
+                                        {postsByCategoryAndYear.academics[Number(year)]?.map((post) => (
+                                            <article class="flex items-stretch">
+                                                <time class="text-gray-600 uppercase text-sm md:text-base flex items-center min-w-[100px] md:min-w-[140px]">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 flex items-center">
+                                                    <p class="text-sm md:text-base text-gray-900">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <!-- Academics by Tag -->
+                        <div class="sort-content hidden" data-sort="tag">
+                            {Object.keys(postsByCategoryAndTag.academics).sort().map((tag) => (
+                                <div class="mb-6 last:mb-0">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="inline-block bg-black text-white px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 border-black">
+                                            {tag}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4 space-y-2 border-l-2 border-gray-300 pl-4">
+                                        {postsByCategoryAndTag.academics[tag]?.map((post) => (
+                                            <article class="flex items-start gap-3">
+                                                <time class="text-gray-600 whitespace-nowrap text-xs flex-shrink-0">
+                                                    {new Date(post.data.date.getTime() + post.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: '2-digit',
+                                                        year: 'numeric',
+                                                        timeZone: 'PST'
+                                                    })}
+                                                </time>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-gray-900 leading-tight text-sm">
+                                                        <a href={`/${post.collection}/${post.id}/`} class="no-underline hover:underline text-blue-600">
+                                                            {post.data.title}
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+		</main>
+		<Footer />
+
+        <script is:inline>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get category from URL parameter, default to 'all'
+                const urlParams = new URLSearchParams(window.location.search);
+                let currentCategory = urlParams.get('category') || 'all';
+                let currentSort = 'year';
+
+                // Set initial category view
+                function setInitialCategory() {
+                    // Hide all category content
+                    document.querySelectorAll('.category-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Show selected category content
+                    const categoryContent = document.querySelector(`.category-content[data-category="${currentCategory}"]`);
+                    if (categoryContent) {
+                        categoryContent.classList.remove('hidden');
+                    }
+
+                    // Reset all category buttons
+                    document.querySelectorAll('.category-button').forEach(btn => {
+                        btn.classList.remove('bg-black', 'text-white');
+                        btn.classList.add('bg-white', 'text-black');
+                    });
+
+                    // Highlight selected category button
+                    const selectedButton = document.querySelector(`.category-button[data-category="${currentCategory}"]`);
+                    if (selectedButton) {
+                        selectedButton.classList.remove('bg-white', 'text-black');
+                        selectedButton.classList.add('bg-black', 'text-white');
+                    }
+                }
+
+                // Initialize on page load
+                setInitialCategory();
+
+                // Category button handlers
+                document.querySelectorAll('.category-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const category = this.getAttribute('data-category');
+                        currentCategory = category;
+
+                        // Hide all category content
+                        document.querySelectorAll('.category-content').forEach(content => {
+                            content.classList.add('hidden');
+                        });
+
+                        // Show selected category content
+                        const selectedCategoryContent = document.querySelector(`.category-content[data-category="${category}"]`);
+                        selectedCategoryContent.classList.remove('hidden');
+
+                        // Show the current sort view within the new category
+                        selectedCategoryContent.querySelectorAll('.sort-content').forEach(content => {
+                            content.classList.add('hidden');
+                        });
+                        selectedCategoryContent.querySelector(`.sort-content[data-sort="${currentSort}"]`).classList.remove('hidden');
+
+                        // Reset all category buttons
+                        document.querySelectorAll('.category-button').forEach(btn => {
+                            btn.classList.remove('bg-black', 'text-white');
+                            btn.classList.add('bg-white', 'text-black');
+                        });
+
+                        // Highlight selected category button
+                        this.classList.remove('bg-white', 'text-black');
+                        this.classList.add('bg-black', 'text-white');
+                    });
+                });
+
+                // Sort button handlers
+                document.querySelectorAll('.sort-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const sort = this.getAttribute('data-sort');
+                        currentSort = sort;
+
+                        // Hide all sort content within current category
+                        const currentCategoryContent = document.querySelector(`.category-content[data-category="${currentCategory}"]`);
+                        currentCategoryContent.querySelectorAll('.sort-content').forEach(content => {
+                            content.classList.add('hidden');
+                        });
+
+                        // Show selected sort content
+                        currentCategoryContent.querySelector(`.sort-content[data-sort="${sort}"]`).classList.remove('hidden');
+
+                        // Reset all sort buttons
+                        document.querySelectorAll('.sort-button').forEach(btn => {
+                            btn.classList.remove('bg-black', 'text-white');
+                            btn.classList.add('bg-white', 'text-black');
+                        });
+
+                        // Highlight selected sort button
+                        this.classList.remove('bg-white', 'text-black');
+                        this.classList.add('bg-black', 'text-white');
+                    });
+                });
+            });
+        </script>
+	</body>
+</html>
