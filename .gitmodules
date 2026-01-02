@@ -1,5 +1,5 @@
 [submodule "/Users/johndaniel/Developer/blog/src/content"]
 	path = /Users/johndaniel/Developer/blog/src/content
-	url = https://github.com/norombabajd/content.git
+	url = git@github.com:norombabajd/content.git
 [submodule "src/content"]
 	branch = main
