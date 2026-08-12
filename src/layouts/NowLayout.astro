@@ -1,0 +1,76 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import NowSections from '../components/NowSections.astro';
+import NowLists from '../components/NowLists.astro';
+import { PROFILE_NAME } from '../consts';
+
+type Props = CollectionEntry<'now'>['data'];
+
+const { title, description, date, tags, cover, watching, listening, reading } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="antialiased">
+	<head>
+		<BaseHead
+			title={title}
+			description={description}
+			image={cover}
+			ogType="article"
+			publishedTime={date}
+			author={PROFILE_NAME}
+			tags={tags}
+		/>
+	</head>
+	<body>
+		<Header />
+		<main class="w-full max-w-3xl mx-auto px-4 py-8">
+			<div class="mb-6">
+				<a href="/now" class="inline-flex min-h-10 items-center text-black hover:underline font-bold text-sm uppercase tracking-wide">
+					<svg class="w-4 h-4 mr-2" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path>
+					</svg>
+					All now updates
+				</a>
+			</div>
+
+			<article class="space-y-6">
+				<header class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-10">
+					<p class="text-xs text-gray-600 font-black uppercase tracking-wide mb-2">Now update</p>
+					<h1 class="now-title font-black text-black leading-tight text-balance mb-3">{title}</h1>
+					<time class="text-sm text-gray-600 uppercase tracking-wide block mb-4">
+						{new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							timeZone: 'PST'
+						})}
+					</time>
+					{description && <p class="text-gray-700 text-pretty leading-relaxed max-w-2xl">{description}</p>}
+				</header>
+
+				<NowSections>
+					<slot />
+				</NowSections>
+
+				<NowLists watching={watching} listening={listening} reading={reading} />
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.now-title {
+		font-size: 1.875rem;
+	}
+
+	@media (min-width: 48rem) {
+		.now-title {
+			font-size: 2.25rem;
+		}
+	}
+</style>

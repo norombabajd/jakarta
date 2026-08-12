@@ -3,6 +3,8 @@ import { getCollection, render } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
+import NowSections from '../../components/NowSections.astro';
+import NowLists from '../../components/NowLists.astro';
 import { SITE_TITLE, DEFAULT_OG_IMAGE, NOW_DESCRIPTION } from '../../consts';
 
 const posts = (await getCollection('now')).sort(
@@ -36,10 +38,9 @@ const { Content: NowContent } = latestPost ? await render(latestPost) : { Conten
 			<!-- Latest Update Section -->
 			{latestPost && (
 				<section class="mb-6">
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
 						<div class="flex flex-col">
-							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Latest Update</p>
-							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
+						<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
 								Last updated: {new Date(latestPost.data.date.getTime() + latestPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
 									year: 'numeric',
 									month: 'long',
@@ -52,15 +53,28 @@ const { Content: NowContent } = latestPost ? await render(latestPost) : { Conten
 									{latestPost.data.title}
 								</a>
 							</h3>
-
-							{NowContent && (
-								<div class="prose prose-lg max-w-none text-gray-700">
-									<NowContent />
-								</div>
-							)}
+							<p class="prose prose-lg text-gray-700 leading-relaxed italic">{latestPost.data.description}</p>
 						</div>
 					</div>
 				</section>
+			)}
+
+			{NowContent && (
+				<div class="mb-6">
+					<NowSections>
+						<NowContent />
+					</NowSections>
+				</div>
+			)}
+
+			{latestPost && (
+				<div class="mb-6">
+					<NowLists
+						watching={latestPost.data.watching}
+						listening={latestPost.data.listening}
+						reading={latestPost.data.reading}
+					/>
+				</div>
 			)}
 
 			<!-- Previous Updates Section -->

@@ -8,6 +8,10 @@ export const ACADEMICS_DESCRIPTION = 'Everything graduate school.';
 export const TECHNOLOGY_DESCRIPTION = 'Consumer electronics, technical things, etc.';
 export const NOW_DESCRIPTION = 'What I\'m doing now, brief and short updates on my life.';
 
+// Homepage collection visibility
+// Set to false to show links to empty collections.
+export const HIDE_EMPTY_COLLECTIONS = true;
+
 // Profile information
 export const PROFILE_NAME = 'John Daniel Norombaba';
 export const PROFILE_BIO = 'A caffeinated and talkative tech enthusiast. Studying Informatics at UC Irvine.';

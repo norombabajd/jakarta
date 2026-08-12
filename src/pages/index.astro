@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
-import { SITE_TITLE, SITE_DESCRIPTION, APPLE_MUSIC_PLAYLIST, ENABLE_PLAYLIST_FEATURE, PROFILE_NAME, PROFILE_BIO, PROFILE_PHOTO, DEFAULT_OG_IMAGE, PERSONAL_DESCRIPTION, ACADEMICS_DESCRIPTION, TECHNOLOGY_DESCRIPTION, NOW_DESCRIPTION } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION, APPLE_MUSIC_PLAYLIST, ENABLE_PLAYLIST_FEATURE, PROFILE_NAME, PROFILE_BIO, PROFILE_PHOTO, DEFAULT_OG_IMAGE, PERSONAL_DESCRIPTION, ACADEMICS_DESCRIPTION, TECHNOLOGY_DESCRIPTION, NOW_DESCRIPTION, HIDE_EMPTY_COLLECTIONS } from '../consts';
 import Footer from '../components/Footer.astro';
 
 // Fetch posts from all collections
@@ -11,6 +11,13 @@ const personalPosts = await getCollection('personal');
 const technologyPosts = await getCollection('technology');
 const academicsPosts = await getCollection('academics');
 const nowPosts = await getCollection('now');
+
+const homepageCollections = [
+	{ path: '/academics', description: ACADEMICS_DESCRIPTION, postCount: academicsPosts.length },
+	{ path: '/now', description: NOW_DESCRIPTION, postCount: nowPosts.length },
+	{ path: '/personal', description: PERSONAL_DESCRIPTION, postCount: personalPosts.length },
+	{ path: '/technology', description: TECHNOLOGY_DESCRIPTION, postCount: technologyPosts.length },
+].filter((collection) => !HIDE_EMPTY_COLLECTIONS || collection.postCount > 0);
 
 // Combine all posts and sort by date
 const posts = [...personalPosts, ...technologyPosts, ...academicsPosts].sort(
@@ -219,30 +226,14 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
 						<h3 class="text-lg font-black text-black mb-4">Collections</h3>
 						<p class="pb-4"></p>
-						<div>
-							<a href="/academics" class="inline-block text-blue-600 hover:underline font-bold">
-								/academics
-							</a>
-							<p>{ACADEMICS_DESCRIPTION}</p>
-						</div>
-						<div>
-							<a href="/now" class="inline-block text-blue-600 hover:underline font-bold">
-								/now
-							</a>
-							<p>{NOW_DESCRIPTION}</p>
-						</div>
-						<div>
-							<a href="/personal" class="inline-block text-blue-600 hover:underline font-bold">
-								/personal
-							</a>
-							<p>{PERSONAL_DESCRIPTION}</p>
-						</div>
-						<div>
-							<a href="/technology" class="inline-block text-blue-600 hover:underline font-bold">
-								/technology
-							</a>
-							<p>{TECHNOLOGY_DESCRIPTION}</p>
-						</div>
+						{homepageCollections.map((collection) => (
+							<div>
+								<a href={collection.path} class="inline-block text-blue-600 hover:underline font-bold">
+									{collection.path}
+								</a>
+								<p>{collection.description}</p>
+							</div>
+						))}
 						<div class="mt-6 pt-4 border-t-2 border-black">
 							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide">Home [CV & Case Studies]</p>
 							<a href="https://norombabajd.com" class="inline-block text-blue-600 hover:underline font-bold">
