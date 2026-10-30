@@ -17,6 +17,7 @@ const linkedItemSchema = ({ image }: { image: any }) =>
 		creator: z.string().optional(),
 		artist: z.string().optional(),
 		description: z.string().optional(),
+		spoilers: z.string().optional(),
 		attribution: z.string().optional(),
 		link: z.string().optional(),
 		cover: image().optional(),

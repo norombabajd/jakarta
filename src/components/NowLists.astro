@@ -7,6 +7,7 @@ interface LinkedItem {
 	creator?: string;
 	artist?: string;
 	description?: string;
+	spoilers?: string;
 	attribution?: string;
 	link?: string;
 	cover?: ImageMetadata;
@@ -87,6 +88,22 @@ const attributions = sections.flatMap(({ items }) =>
 								</span>
 								{item.link && <span class="arrow" aria-hidden="true">↗</span>}
 							</ItemElement>
+							{type === 'watching' && item.spoilers && (
+								<details class="item-review">
+									<summary>
+										<svg class="review-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+											<path d="m6 3 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+										<span class="review-show">show thoughts (contains spoilers)</span>
+										<span class="review-hide">hide thoughts (contains spoilers)</span>
+									</summary>
+									<div class="item-description">
+										{item.spoilers.trim().split(/\r?\n\s*\r?\n/).map((paragraph) => (
+											<p>{paragraph}</p>
+										))}
+									</div>
+								</details>
+							)}
 						</li>
 						);
 					})}
@@ -247,6 +264,67 @@ const attributions = sections.flatMap(({ items }) =>
 	.item-link.is-linked:hover .item-byline,
 	.item-link.is-linked:hover .item-description {
 		color: #1d4ed8;
+	}
+
+	.item-review {
+		padding-bottom: 0.75rem;
+	}
+
+	.item-review summary {
+		align-items: center;
+		cursor: pointer;
+		display: flex;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 700;
+		list-style: none;
+		min-height: 2.5rem;
+	}
+
+	.item-review summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.item-review summary:hover {
+		color: #2563eb;
+	}
+
+	.item-review summary:focus-visible {
+		outline: 3px solid #2563eb;
+		outline-offset: 3px;
+	}
+
+	.review-chevron {
+		flex-shrink: 0;
+	}
+
+	.item-review[open] .review-chevron {
+		transform: rotate(90deg);
+	}
+
+	.review-hide,
+	.item-review[open] .review-show {
+		display: none;
+	}
+
+	.item-review[open] .review-hide {
+		display: inline;
+	}
+
+	.item-review .item-description {
+		color: #374151;
+		display: flex;
+		flex-direction: column;
+		gap: 1.7em;
+		font-style: normal;
+		line-height: 1.7;
+		margin: 0.25rem 0 0;
+		overflow-wrap: anywhere;
+		white-space: pre-line;
+	}
+
+	.item-review .item-description p {
+		margin: 0;
 	}
 
 	.arrow {

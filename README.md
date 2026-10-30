@@ -78,6 +78,10 @@ watching:
   - title: 'Movie or series title'
     creator: 'Director, creator, or studio'
     description: 'A short review or note about what stood out.' # optional
+    spoilers: | # optional, hidden in a dropdown; preserves line breaks
+      Review details that reveal the plot.
+
+      Another paragraph of a longer review.
     link: 'https://example.com/movie' # optional
     cover: './img/movie-cover.jpg' # optional, relative to the post
     attribution: 'https://en.wikipedia.org/wiki/File:Example_movie_poster.jpg' # optional
@@ -112,7 +116,8 @@ Structured media fields:
 | `title` | Yes | Item title displayed in the row |
 | `creator` | No | Director, author, studio, platform, or other creator label |
 | `artist` | No | Artist label for listening entries; takes precedence over `creator` |
-| `description` | No | A lighter, italic review or personal note |
+| `description` | No | An always-visible, italic review or personal note |
+| `spoilers` | No | Watching review text hidden by default in a show/hide dropdown |
 | `link` | No | Makes the entire item row link to an external page |
 | `cover` | No | Local image path; rendered as a small, non-draggable thumbnail |
 | `attribution` | No | Image-source URL collected in the attribution card |
