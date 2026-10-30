@@ -1,5 +1,5 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
@@ -30,7 +30,13 @@ const recentPosts = otherPosts.slice(0, 3);
 // Get latest now post
 const sortedNowPosts = nowPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const latestNowPost = sortedNowPosts[0];
-const { Content: NowContent } = latestNowPost ? await render(latestNowPost) : { Content: null };
+const nowHighlights = latestNowPost ? [
+	{ label: 'Watching', items: latestNowPost.data.watching ?? [] },
+	{ label: 'Listening', items: latestNowPost.data.listening ?? [] },
+].filter((group) => group.items.length > 0).map((group) => {
+	const previews = group.items.filter((item) => item.cover);
+	return { ...group, previews, remaining: group.items.length - previews.length };
+}) : [];
 
 // Collect all unique tags and count posts per tag
 const tagStats = posts.reduce((acc, post) => {
@@ -57,48 +63,54 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 	</head>
 	<body>
 		<Header />
-		<main class="w-full max-w-3xl mx-auto px-4 py-8">
+		<main class="home-grid w-full mx-auto px-4 py-8">
 
-			<!-- Profile Section -->
-			<section>
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+			<!-- Profile -->
+			<section class="home-profile">
+				<div class="home-card profile-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+					<div class="profile-bio">
 						<h3 class="text-lg font-black text-black tracking-tight">{PROFILE_NAME}</h3>
 						<p class="font-semibold tracking-tight">Researcher, designer, and builder.</p>
 						<p class="mt-2">Currently pursuing a master's degree in Informatics at the University of California, Irvine.</p>
 					</div>
+				</div>
 			</section>
 
-			<!-- Now Section -->
 			{latestNowPost && (
-				<section class="mb-6">
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
-						<div class="flex flex-col">
-							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Now</p>
-							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
-								Last updated: {new Date(latestNowPost.data.date.getTime() + latestNowPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
-									year: 'numeric',
-									month: 'long',
-									day: 'numeric',
-									timeZone: 'PST'
-								})}
-							</time>
-							<h3 class="text-2xl md:text-3xl font-black text-black mb-6">
-								<a href={`/now/`} class="no-underline hover:underline">
-									{latestNowPost.data.title}
-								</a>
-							</h3>
+				<section class="home-now">
+					<div class="home-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+						<div class="profile-now">
+							<div class="now-heading">
+								<p class="post-eyebrow">Now</p>
+								<time class="post-date" datetime={latestNowPost.data.date.toISOString().slice(0, 10)}>
+									{latestNowPost.data.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+								</time>
+								<h3 class="post-title"><a href="/now/">{latestNowPost.data.title}</a></h3>
+							</div>
+							<p class="now-description">{latestNowPost.data.description}</p>
+							{nowHighlights.length > 0 && (
+								<div class="now-highlights">
+									{nowHighlights.map((group) => (
+										<section class="now-interest" aria-label={group.label}>
+											<h4>{group.label}</h4>
+											<ul data-cover-gallery data-total={group.items.length} data-category={group.label.toLowerCase()}>
+												{group.previews.map((item) => (
+													<li data-cover-item data-cover-width={item.cover ? (group.label === 'Watching' ? 84 * item.cover.width / item.cover.height : 84) : 0}>
+														{item.cover && <Image src={item.cover} alt={item.artist ? `${item.title} — ${item.artist}` : item.title} width={84} height={group.label === 'Watching' ? undefined : 84} fit="cover" class="interest-cover" style={`--cover-width: ${group.label === 'Watching' ? 84 * item.cover.width / item.cover.height : 84}px`} />}
 
-							{NowContent && (
-								<div class="prose prose-lg max-w-none text-gray-700">
-									{latestNowPost.data.description}
+													</li>
+												))}
+												<li data-cover-overflow hidden={group.remaining === 0}>
+														<a class="interest-more" style={`--counter-width: ${group.label === 'Watching' ? 84 * (group.previews[0]?.cover?.width ?? 2) / (group.previews[0]?.cover?.height ?? 3) : 84}px`} href={`/now/#now-${group.label.toLowerCase()}`} aria-label={`${group.remaining} more ${group.label.toLowerCase()} items`}>
+															+{group.remaining}
+														</a>
+													</li>
+											</ul>
+										</section>
+									))}
 								</div>
 							)}
-
-							<div class="mt-6 pt-4 border-t-2 border-black">
-								<a href={`/now`} class="inline-block text-blue-600 hover:underline font-bold">
-									Read here...
-								</a>
-							</div>
+							<a href="/now/" class="now-read-more">More of what I’m up to →</a>
 						</div>
 					</div>
 				</section>
@@ -106,11 +118,11 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 
 			<!-- Featured Post Section -->
 			{featuredPost && (
-				<section class="mb-6">
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+				<section class="home-featured">
+					<div class="home-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
 						<div class="flex flex-col">
-							<p class="text-sm text-gray-700 font-semibold uppercase tracking-wide mb-2">Latest post</p>
-							<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
+							<p class="post-eyebrow">Latest post</p>
+							<time class="post-date">
 								{new Date(featuredPost.data.date.getTime() + featuredPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
 									year: 'numeric',
 									month: 'long',
@@ -118,14 +130,14 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 									timeZone: 'PST'
 								})}
 							</time>
-							<h3 class="text-2xl md:text-3xl font-black text-black mb-6">
+							<h3 class="post-title">
 								<a href={`/${featuredPost.collection}/${featuredPost.id}/`} class="no-underline hover:underline">
 									{featuredPost.data.title}
 								</a>
 							</h3>
 
 							{featuredPost.data.cover && (
-								<div class="border-2 border-black mt-6 mb-6">
+								<div class="featured-cover border-2 border-black">
 									<Image
 										fit="cover"
 										src={featuredPost.data.cover}
@@ -136,7 +148,7 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 							)}
 
 							{featuredPost.data.description && (
-								<p class="leading-relaxed mb-4 text-gray-700">
+								<p class="featured-description leading-relaxed mb-4 text-gray-700">
 									{featuredPost.data.description}
 								</p>
 							)}
@@ -156,10 +168,12 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 								</div>
 							)}
 
-							<div class="mt-6 pt-4 border-t-2 border-black">
+							<div class="featured-footer">
+								<div class="pt-4 border-t-2 border-black">
 								<a href={`/${featuredPost.collection}/${featuredPost.id}/`} class="inline-block text-blue-600 hover:underline font-bold">
 									Read here...
 								</a>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -168,8 +182,8 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 
 			<!-- Recent Posts List -->
 			{recentPosts.length > 0 && (
-				<section>
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+				<section class="home-recent">
+					<div class="home-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
 						<h3 class="text-lg font-black text-black mb-4 pb-4">More Posts</h3>
 						<div class="space-y-4">
 							{recentPosts.map((post) => (
@@ -222,8 +236,8 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 				</section>
 			)}
 
-			<section>
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+			<section class="home-collections">
+					<div class="home-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
 						<h3 class="text-lg font-black text-black mb-4">Collections</h3>
 						<p class="pb-4"></p>
 						{homepageCollections.map((collection) => (
@@ -251,8 +265,8 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 
 
 			<!-- Songs in Rotation -->
-			{ENABLE_PLAYLIST_FEATURE && APPLE_MUSIC_PLAYLIST && (<section class="mb-6">
-				<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
+			{ENABLE_PLAYLIST_FEATURE && APPLE_MUSIC_PLAYLIST && (<section class="home-playlist">
+				<div class="home-card bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 md:p-12">
 					<h3 class="text-lg font-black text-black mb-4 pb-4">Songs in Rotation</h3>
 					<iframe height="450" width="100%" title="Media player" src={APPLE_MUSIC_PLAYLIST} id="embedPlayer" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation" allow="autoplay *; encrypted-media *; clipboard-write" style="border: 0px; border-radius: 12px; width: 100%; height: 450px; max-width: 660px;"></iframe>
 				</div>
@@ -262,3 +276,188 @@ const sortedTags = Object.keys(tagStats).sort((a, b) => a.localeCompare(b));
 		<Footer />
 	</body>
 </html>
+
+<script>
+	// Fit whole covers into one row, reserving room for the remaining-item link.
+	document.querySelectorAll<HTMLUListElement>('[data-cover-gallery]').forEach((gallery) => {
+		const items = Array.from(gallery.querySelectorAll<HTMLLIElement>('[data-cover-item]'));
+		const overflow = gallery.querySelector<HTMLLIElement>('[data-cover-overflow]');
+		const link = overflow?.querySelector<HTMLAnchorElement>('a');
+		if (!overflow || !link) return;
+		const total = Number(gallery.dataset.total);
+		const widths = items.map((item) => Number(item.dataset.coverWidth));
+		const update = () => {
+			const gap = parseFloat(getComputedStyle(gallery).columnGap) || 0;
+			const available = gallery.clientWidth;
+			const allWidth = widths.reduce((sum, width) => sum + width, 0) + gap * Math.max(0, items.length - 1);
+			let visible = items.length;
+			if (allWidth > available || total > items.length) {
+				visible = 0;
+				let used = 0;
+				const counterWidth = parseFloat(getComputedStyle(link).width);
+				for (const width of widths) {
+					const next = used + (visible > 0 ? gap : 0) + width;
+					if (next + gap + counterWidth > available) break;
+					used = next;
+					visible++;
+				}
+			}
+			items.forEach((item, index) => { item.hidden = index >= visible; });
+			const remaining = total - visible;
+			overflow.hidden = remaining === 0;
+			link.textContent = `+${remaining}`;
+			link.setAttribute('aria-label', `${remaining} more ${gallery.dataset.category} items`);
+		};
+		new ResizeObserver(update).observe(gallery);
+		update();
+	});
+</script>
+
+<style>
+	.home-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1.5rem;
+		max-width: 48rem;
+		align-content: start;
+	}
+
+	.home-grid > section {
+		min-width: 0;
+	}
+
+	.profile-now { min-width: 0; }
+	.post-eyebrow {
+		margin-bottom: 0.25rem;
+		font-size: 0.875rem;
+		line-height: 1.4;
+		font-weight: 600;
+		color: #374151;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+	}
+	.post-date {
+		display: block;
+		margin-bottom: 0.25rem;
+		font-size: 0.875rem;
+		line-height: 1.4;
+		color: #4b5563;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+	}
+	.now-description { margin: 0 0 1.25rem; font-size: 1rem; line-height: 1.6; }
+	.now-highlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+	.now-interest h4 { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+	.now-interest ul { list-style: none; padding: 0; margin: 0; display: flex; align-items: flex-start; gap: 0.875rem; }
+	.now-interest li { min-width: 0; flex-shrink: 0; }
+	.interest-cover { display: block; width: var(--cover-width, 5.25rem); height: 5.25rem; object-fit: cover; border: 2px solid black; }
+	.interest-more {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--counter-width, 5.25rem);
+		height: 5.25rem;
+		border: 2px solid black;
+		background: #f3f4f6;
+		color: black;
+		font-size: 1rem;
+		font-weight: 700;
+	}
+	.interest-more:hover { background: #e5e7eb; text-decoration: none; }
+	.interest-more:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+	.now-read-more { display: inline-block; margin-top: 1.5rem; font-size: 1rem; font-weight: 700; }
+	.now-read-more:hover { text-decoration: underline; }
+
+	.home-card {
+		height: 100%;
+	}
+
+	.post-title {
+		margin: 0 0 1rem;
+		font-size: 2rem;
+		line-height: 1.2;
+		text-wrap: balance;
+	}
+
+	.home-featured .featured-cover {
+		margin: 0 0 1.5rem;
+	}
+
+	.featured-footer {
+		padding-top: 1.5rem;
+	}
+
+	@media (min-width: 48rem) {
+
+		.home-card {
+			padding: 2rem;
+		}
+
+
+		.home-featured > .home-card > div {
+			height: 100%;
+		}
+
+		.home-featured > .home-card > div > :last-child {
+			margin-top: auto;
+		}
+
+		.home-featured > .home-card > div > * {
+			flex-shrink: 0;
+		}
+
+		.post-title {
+			font-size: 2.25rem;
+		}
+
+		.home-featured .featured-description {
+			font-size: 1.125rem;
+			line-height: 1.6;
+			text-wrap: pretty;
+		}
+
+		.home-featured img {
+			aspect-ratio: 4 / 3;
+		}
+
+		.home-recent article {
+			flex-direction: column;
+			gap: 0.25rem;
+		}
+
+		.home-recent time {
+			width: auto;
+			font-size: 0.75rem;
+		}
+
+		.home-collections,
+		.home-playlist {
+			grid-column: 1 / -1;
+		}
+	}
+
+	@media (min-width: 68.75rem) {
+		.home-profile .profile-card {
+			display: flex;
+			align-items: center;
+			/* Bias the text slightly upward for optical balance with the denser Now card. */
+			padding-bottom: 3rem;
+		}
+
+		.home-grid {
+			max-width: 74rem;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.home-now,
+		.home-featured {
+			grid-column: span 2;
+		}
+
+
+		.home-featured img {
+			aspect-ratio: 16 / 9;
+		}
+	}
+
+</style>
