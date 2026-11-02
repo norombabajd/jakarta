@@ -38,6 +38,21 @@ const imageUrl = image
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<script is:inline>
+	// Apply the saved preference before the page paints to avoid a light-mode flash.
+	(() => {
+		const root = document.documentElement;
+		let preference = 'system';
+		try {
+			const saved = localStorage.getItem('dark-mode');
+			if (saved === 'on' || saved === 'off') preference = saved;
+		} catch { /* System mode also works when storage is unavailable. */ }
+		root.dataset.themePreference = preference;
+		root.dataset.theme = preference === 'on' ||
+			(preference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+			? 'dark' : 'light';
+	})();
+</script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link

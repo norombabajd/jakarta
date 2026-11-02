@@ -26,7 +26,7 @@ const { Content: NowContent } = latestPost ? await render(latestPost) : { Conten
 
 			<!-- Header Section -->
 			<section>
-				<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
+				<div class="bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#000] p-6 md:p-8 mb-6">
 					<h3 class="text-xl tracking-tight mb-3 text-black">Now</h3>
 					<p class="text-gray-700">
 						The place to know what I'm up to. Great place to start if we haven't caught up in awhile. 
@@ -38,7 +38,7 @@ const { Content: NowContent } = latestPost ? await render(latestPost) : { Conten
 			<!-- Latest Update Section -->
 			{latestPost && (
 				<section class="mb-6">
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+					<div class="bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
 						<div class="flex flex-col">
 						<time class="text-sm text-gray-600 uppercase tracking-wide mb-2">
 								Last updated: {new Date(latestPost.data.date.getTime() + latestPost.data.date.getTimezoneOffset() * 60000).toLocaleDateString('en-US', {
@@ -80,7 +80,7 @@ const { Content: NowContent } = latestPost ? await render(latestPost) : { Conten
 			<!-- Previous Updates Section -->
 			{posts.length > 1 && (
 				<section class="mb-6">
-					<div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
+					<div class="bg-white border-4 border-ink shadow-[8px_8px_0px_0px_#000] p-6 md:p-8">
 						<h3 class="text-lg font-black text-black mb-4 pb-4">Previous Updates</h3>
 						<div class="space-y-4">
 							{posts.slice(1).map((post) => (

@@ -9,7 +9,15 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@theme inline {
+	--color-ink: var(--ink-border);
+}
+
 :root {
+	color-scheme: light;
+	--page-background: #fff;
+	--ink-border: #000;
+	--image-outline: rgba(0, 0, 0, 0.1);
 	--accent: #2337ff;
 	--accent-dark: #000d8a;
 	--black: 15, 18, 25;
@@ -22,12 +30,65 @@
 		rgba(var(--gray), 33%);
 }
 
+/* Reuse the site's utility palette so cards, filters, and text share one theme. */
+:root[data-theme="dark"] {
+	color-scheme: dark;
+	--page-background: #181818;
+	--ink-border: #3a3a3a;
+	--accent: #e3e3e3;
+	--accent-dark: #fff;
+	--black: 238, 238, 238;
+	--gray: 160, 160, 160;
+	--gray-light: 51, 51, 51;
+	--gray-dark: 212, 212, 212;
+	--gray-gradient: var(--page-background), var(--page-background);
+	--image-outline: rgba(255, 255, 255, 0.1);
+	--color-white: #1e1e1e;
+	--color-black: #eee;
+	--color-gray-100: #2a2a2a;
+	--color-gray-200: #383838;
+	--color-gray-300: #4a4a4a;
+	--color-gray-400: #999;
+	--color-gray-500: #aaa;
+	--color-gray-600: #b4b4b4;
+	--color-gray-700: #c4c4c4;
+	--color-gray-800: #d4d4d4;
+	--color-gray-900: #eee;
+	--color-blue-600: var(--accent);
+	--color-blue-700: var(--accent-dark);
+}
+
+:root[data-theme="dark"] .prose {
+	--tw-prose-body: var(--color-gray-800);
+	--tw-prose-headings: var(--color-black);
+	--tw-prose-lead: var(--color-gray-700);
+	--tw-prose-links: var(--accent);
+	--tw-prose-bold: var(--color-black);
+	--tw-prose-counters: var(--color-gray-600);
+	--tw-prose-bullets: var(--color-gray-500);
+	--tw-prose-hr: var(--color-gray-300);
+	--tw-prose-quotes: var(--color-gray-800);
+	--tw-prose-quote-borders: var(--color-gray-300);
+	--tw-prose-captions: var(--color-gray-600);
+	--tw-prose-code: var(--color-black);
+	--tw-prose-pre-code: #e5e5e5;
+	--tw-prose-pre-bg: #141414;
+	--tw-prose-th-borders: var(--color-gray-300);
+	--tw-prose-td-borders: var(--color-gray-200);
+}
+
+:root[data-theme="dark"] .prose a {
+	text-decoration: underline;
+	text-decoration-color: #777;
+	text-underline-offset: 0.16em;
+}
+
 body {
 	font-family: "Inter", sans-serif;
 	margin: 0;
 	padding: 0;
 	text-align: left;
-	background: linear-gradient(var(--gray-gradient)) no-repeat;
+	background: linear-gradient(var(--gray-gradient)) no-repeat var(--page-background);
 	background-size: 100% 600px;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
