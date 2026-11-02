@@ -1,0 +1,130 @@
+---
+const modes = [
+	{ value: 'system', label: 'System', path: 'M3 4h18v12H3z M8 21h8 M12 16v5' },
+	{ value: 'on', label: 'On', path: 'M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z' },
+	{ value: 'off', label: 'Off', path: 'M12 3v1 M12 20v1 M3 12h1 M20 12h1 M5.6 5.6l.7.7 M17.7 17.7l.7.7 M5.6 18.4l.7-.7 M17.7 6.3l.7-.7 M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0' },
+];
+---
+
+<details class="theme-picker">
+	<summary aria-label="Appearance" title="Dark mode: System">
+		{modes.map((mode) => (
+			<svg class={`trigger-icon trigger-icon--${mode.value}`} aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d={mode.path} /></svg>
+		))}
+	</summary>
+	<fieldset class="theme-menu">
+		<legend class="sr-only">Dark mode</legend>
+		<p class="menu-title" aria-hidden="true">Dark mode</p>
+		{modes.map((mode) => (
+			<label>
+				<input type="radio" name="dark-mode" value={mode.value} checked={mode.value === 'system'} />
+				<span class="theme-option">
+					<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d={mode.path} /></svg>
+					<span>{mode.label}</span>
+					<svg class="check" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6" /></svg>
+				</span>
+			</label>
+		))}
+	</fieldset>
+</details>
+
+<script>
+	const picker = document.querySelector<HTMLDetailsElement>('.theme-picker');
+	const trigger = picker?.querySelector('summary');
+	const root = document.documentElement;
+	const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+	const options = document.querySelectorAll<HTMLInputElement>('input[name="dark-mode"]');
+
+	function applyPreference(preference: string) {
+		root.dataset.themePreference = preference;
+		root.dataset.theme = preference === 'on' || (preference === 'system' && systemTheme.matches)
+			? 'dark' : 'light';
+		options.forEach((option) => { option.checked = option.value === preference; });
+		if (trigger) trigger.title = `Dark mode: ${preference.charAt(0).toUpperCase() + preference.slice(1)}`;
+	}
+
+	applyPreference(root.dataset.themePreference ?? 'system');
+	options.forEach((option) => {
+		option.addEventListener('change', () => {
+			applyPreference(option.value);
+			try { localStorage.setItem('dark-mode', option.value); } catch { /* Keep the current selection. */ }
+		});
+	});
+	systemTheme.addEventListener('change', () => {
+		if (root.dataset.themePreference === 'system') applyPreference('system');
+	});
+	window.addEventListener('storage', (event) => {
+		if (event.key === 'dark-mode' || event.key === null) {
+			applyPreference(event.newValue === 'on' || event.newValue === 'off' ? event.newValue : 'system');
+		}
+	});
+	document.addEventListener('pointerdown', (event) => {
+		if (event.target instanceof Node && !picker?.contains(event.target) && picker) picker.open = false;
+	});
+	picker?.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') {
+			picker.open = false;
+			trigger?.focus();
+		}
+	});
+</script>
+
+<style>
+	.theme-picker { position: relative; flex: 0 0 auto; color: var(--color-gray-600); }
+	summary {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 4px;
+		cursor: pointer;
+		list-style: none;
+		transition: background-color 150ms, color 150ms, scale 150ms;
+	}
+	summary::-webkit-details-marker { display: none; }
+	summary:hover, .theme-picker[open] summary { background: var(--color-gray-100); color: var(--color-black); }
+	summary:active { scale: 0.96; }
+	summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+	.trigger-icon { display: none; }
+	.trigger-icon--system { display: block; }
+	:global(html[data-theme-preference="on"]) .trigger-icon--system,
+	:global(html[data-theme-preference="off"]) .trigger-icon--system { display: none; }
+	:global(html[data-theme-preference="on"]) .trigger-icon--on,
+	:global(html[data-theme-preference="off"]) .trigger-icon--off { display: block; }
+	.theme-menu {
+		position: absolute;
+		z-index: 20;
+		top: calc(100% + 10px);
+		right: 0;
+		width: 180px;
+		margin: 0;
+		padding: 6px;
+		border: 0;
+		border-radius: 8px;
+		background: var(--color-white);
+		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.08), 0 12px 28px -4px rgba(0, 0, 0, 0.12);
+	}
+	:global(html[data-theme="dark"]) .theme-menu { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.13), 0 12px 28px -4px rgba(0, 0, 0, 0.3); }
+	.menu-title { margin: 4px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+	label { display: block; position: relative; cursor: pointer; }
+	input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+	.theme-option {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 40px;
+		padding: 0 10px;
+		border-radius: 2px;
+		color: var(--color-gray-700);
+		font-size: 13px;
+		font-weight: 500;
+		transition: background-color 150ms, color 150ms;
+	}
+	label:hover .theme-option { background: var(--color-gray-100); color: var(--color-black); }
+	input:checked + .theme-option { background: var(--color-gray-100); color: var(--accent); }
+	input:focus-visible + .theme-option { outline: 2px solid var(--accent); outline-offset: -2px; }
+	.check { margin-left: auto; visibility: hidden; }
+	input:checked + .theme-option .check { visibility: visible; }
+	@media (prefers-reduced-motion: reduce) { summary, .theme-option { transition: none; } }
+</style>
